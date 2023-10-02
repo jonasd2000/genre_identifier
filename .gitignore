@@ -1,0 +1,6 @@
+/data/music
+*.txt
+.vscode
+__pycache__
+convertmp4mp3.ps1
+*_model
