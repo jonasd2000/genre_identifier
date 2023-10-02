@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import os
 import argparse
+import subprocess
 
 from pytube import YouTube
 from pytube import Playlist
@@ -23,14 +24,17 @@ class YouTubeDownloader:
     def __init__(self, path: Path) -> None:
         self.path = path
 
-    def download_video_to_mp4(self, url: str, genre: str, training: bool) -> str:
+    def download_video(self, url: str, genre: str, training: bool) -> str:
         video = YouTube(url)
         stream = video.streams.filter(only_audio=True).first()
 
         filename = f"{hash(video.title)}"
         mp4path = stream.download(self.path, filename=filename+".mp4")
+        mp3path = mp4path[:-4] + ".mp3"
+        subprocess.run(f"ffmpeg -i {mp4path} -ab 128k -ac 2 -ar 44100 -vn {mp3path}", shell=True)
+        os.remove(mp4path)
 
-        print(f"The video {url} has been downloaded to {mp4path}")
+        print(f"The video {url} has been downloaded to {mp3path}")
         
         with open(self.path / TRACKINFO_FILENAME, 'r') as track_data_file:
             data = json.load(track_data_file)
@@ -43,12 +47,12 @@ class YouTubeDownloader:
         with open(self.path / TRACKINFO_FILENAME, 'w') as track_data_file:
             json.dump(data, track_data_file)
 
-        return mp4path
+        return mp3path
     
     def download_playlist(self, url: str, genre: str, training: bool, max_tracks: int=None) -> None:
         for i, video in enumerate(Playlist(url).videos):
             try:
-                filename = self.download_video_to_mp4(video.watch_url, genre, training)
+                filename = self.download_video(video.watch_url, genre, training)
 
             except Exception as e:
                 print(e)
