@@ -6,7 +6,7 @@ import torchaudio
 from torch import nn
 
 from train import get_device
-from audio.dataset import prepare_clip
+from audio.helpers import waveform_to_mono, clip_samples
 
 CLIP_LENGTH = 131_072
 MODEL_PATH = "4g_faster_model"
@@ -36,6 +36,7 @@ def main():
 
     track_path = args.path
     waveform, sample_rate = load_track(track_path)
+    waveform = waveform_to_mono(waveform)
 
     device = get_device()
     model = load_model(MODEL_PATH).to(device)
@@ -44,7 +45,7 @@ def main():
     with torch.no_grad():
         result = torch.Tensor([[0 for _ in range(model.lin1[-1].out_features)]]).to(device)
         for i in range(args.passes):
-            clip = torch.Tensor(prepare_clip(waveform, CLIP_LENGTH)).to(device)
+            clip = torch.Tensor(clip_samples(waveform, CLIP_LENGTH)).to(device)
             res = model(clip)
             if args.verbose:
                 print(f"sample {i+1}: {res}")
