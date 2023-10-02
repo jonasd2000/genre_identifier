@@ -1,6 +1,7 @@
 from typing import Any
 import json
 import os
+from tqdm import trange
 
 import torchaudio
 import torch
@@ -8,13 +9,8 @@ from torch.utils.data import Dataset, DataLoader
 
 import numpy as np
 
-from audio.helpers import clip_samples
+from audio.helpers import clip_samples, waveform_to_mono
 
-
-def prepare_clip(waveform, clip_length):
-    cs = clip_samples(waveform, clip_length)
-    clip = np.mean(cs.numpy(), axis=0).reshape(1, -1)
-    return clip
 
 
 class TrackGenreDataset(Dataset):
@@ -48,11 +44,10 @@ class TrackGenreDataset(Dataset):
         return len(self.track_info)
     
     def load_waveforms(self):
-        print("Loading waveforms...")
         waveforms = []
-        for i in range(len(self.track_info)):
+        for i in trange(len(self.track_info), desc="Loading waveforms"):
             waveform, samplerate = torchaudio.load(os.path.join(self.path, self.track_info[i]["filename"] + ".mp3"))
-            waveforms.append(waveform)
+            waveforms.append(waveform_to_mono(waveform))
         return waveforms
 
     def get_waveform(self, index: int) -> np.ndarray:
@@ -61,12 +56,13 @@ class TrackGenreDataset(Dataset):
         else:
             track_file_name = self.track_info[index]["filename"]
             waveform, samplerate = torchaudio.load(os.path.join(self.path, track_file_name + ".mp3"))
+            waveform = waveform_to_mono(waveform)
         return waveform
 
     def __getitem__(self, index) -> tuple[np.ndarray, str]:
         waveform = self.get_waveform(index)
 
-        clip = prepare_clip(waveform, self.clip_length)
+        clip = clip_samples(waveform, self.clip_length)
 
         return clip, self.genre_map[self.track_info[index]["genre"]]
 

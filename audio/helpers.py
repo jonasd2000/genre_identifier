@@ -2,6 +2,9 @@ import random
 import torch
 import matplotlib.pyplot as plt
 
+def waveform_to_mono(waveform):
+    return torch.mean(waveform, dim=0).reshape(1, -1)
+
 def clip_seconds(waveform, seconds, samplerate, random_start=True):
     num_samples = seconds * samplerate
 
