@@ -10,6 +10,8 @@ from torch.utils.data import DataLoader
 
 import numpy as np
 
+from kbhit.kbhit import NonBlockingConsole
+
 from data_manager import DataManager
 from neural_network.nn import NeuralNetwork, train, test
 
@@ -90,26 +92,27 @@ def main():
         ax.grid()
         ax.legend()
 
-    t = 1
-    while True:
-        print(f"Epoch {t}\n-----------------------")
-        train(training_dataloader, model, loss_fn, optimizer, device)
-        accuracy, avg_loss = test(testing_dataloader, model, loss_fn, device, verbose=False)
+    with NonBlockingConsole() as nbc:
+        t = 1
+        while True:
+            print(f"Epoch {t}\n-----------------------")
+            train(training_dataloader, model, loss_fn, optimizer, device)
+            accuracy, avg_loss = test(testing_dataloader, model, loss_fn, device, verbose=False)
 
-        if args.plot:
-            losses.append(avg_loss)
-            accuracies.append(accuracy)
+            if args.plot:
+                losses.append(avg_loss)
+                accuracies.append(accuracy)
 
-            confidences = np.exp(-np.array(losses))
-            confidences_line.set_data(np.arange(1, t+1), confidences)
-            accuracies_line.set_data(np.arange(1, t+1), accuracies)
-            ax.set_xbound(0, t+1)
-            ax.set_ybound(0, 1)
-            ax.set_title(f"confidence: {confidences[-1]:.3f}, accuracy: {accuracies[-1]:.3f}")
-            plt.pause(1e-6)
-        t+=1
-        if getch.getch() == "q":
-            break
+                confidences = np.exp(-np.array(losses))
+                confidences_line.set_data(np.arange(1, t+1), confidences)
+                accuracies_line.set_data(np.arange(1, t+1), accuracies)
+                ax.set_xbound(0, t+1)
+                ax.set_ybound(0, 1)
+                ax.set_title(f"confidence: {confidences[-1]:.3f}, accuracy: {accuracies[-1]:.3f}")
+                plt.pause(1e-6)
+            t+=1
+            if nbc.get_data() == "q":
+                break
     if yes_no("Do you want to save the model?"):
         print(f"saving model to {args.modelpath}")
         torch.save(model, args.modelpath)
