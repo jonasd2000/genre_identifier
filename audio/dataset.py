@@ -51,9 +51,9 @@ class TrackGenreDataset(Dataset):
         return waveforms
 
     def get_waveform(self, index: int) -> np.ndarray:
-        if self.load_to_memory:
+        if self.load_to_memory: # if loaded to memory
             waveform = self.waveforms[index]
-        else:
+        else: # if not read from disk
             track_file_name = self.track_info[index]["filename"]
             waveform, samplerate = torchaudio.load(os.path.join(self.path, track_file_name + ".mp3"))
             waveform = waveform_to_mono(waveform)

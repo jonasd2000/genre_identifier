@@ -9,19 +9,19 @@ from train import get_device
 from audio.helpers import waveform_to_mono, clip_samples
 
 CLIP_LENGTH = 131_072
-MODEL_PATH = "4g_faster_model"
 
 
 def load_track(track_path):
     waveform, sample_rate = torchaudio.load(track_path)
-    return waveform, sample_rate
+    return waveform_to_mono(waveform), sample_rate
 
 def load_model(path: str):
     return torch.load(path)
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("path", help="Path to the track to classify.", type=str)
+    parser.add_argument("track_path", help="Path to the track to classify.", type=str)
+    parser.add_argument("model_path", help="Path to the model to use.", type=str)
     parser.add_argument("-p", "--passes", help="Number of different samples from the track to analyze.", type=int, default=10)
     parser.add_argument("-v", "--verbose", help="Print more information", action="store_true")
     return parser
@@ -34,12 +34,13 @@ def main():
         genre_map = json.load(genre_map_file)
         inv_genre_map = {value: key for key, value in genre_map.items()}
 
-    track_path = args.path
+    track_path = args.track_path
+    model_path = args.model_path
+
     waveform, sample_rate = load_track(track_path)
-    waveform = waveform_to_mono(waveform)
 
     device = get_device()
-    model = load_model(MODEL_PATH).to(device)
+    model = load_model(model_path).to(device)
 
 
     with torch.no_grad():

@@ -82,14 +82,12 @@ def test(dataloader, model, loss_fn, device, verbose: bool=False):
     - test_loss (float): The average loss of the model on the test dataset.
     """
     size = len(dataloader.dataset)
-    num_batches = len(dataloader)
     model.eval()
     test_loss, correct = 0, 0
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(device), y.to(device)
             pred = model(X)
-            # print(pred)
             test_loss += loss_fn(pred, y).item() * len(X)
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 

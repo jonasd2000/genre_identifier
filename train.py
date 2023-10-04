@@ -1,6 +1,5 @@
 import argparse
 import os
-import getch
 
 import matplotlib.pyplot as plt
 
@@ -53,10 +52,13 @@ def yes_no(msg: str):
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("modelpath", help="Path to the model. If the path does not exist yet a new model will be created.", type=str, default=None)
-    parser.add_argument("-d", "--datapath", help="Path to the data. Default is \"data/music/\"", type=str, default="data/music/")
+    parser.add_argument("model_path", help="Path to the model. If the path does not exist yet a new model will be created.", type=str, default=None)
+    parser.add_argument("-d", "--datapath", help="Path to the data used for training. Default is \"data/music/\"", type=str, default="data/music/")
     parser.add_argument("-m", "--memory", help="If set, loads the data to memory. Otherwise reads the samples from disk.", action="store_true")
     parser.add_argument("-p", "--plot", help="If set, plots the results.", action="store_true")
+    parser.add_argument("-l", "--learning_rate", help="Learning rate for the optimizer.", type=float, default=LEARINING_RATE)
+    parser.add_argument("-b", "--batch_size", help="Batch size for the training.", type=int, default=32)
+    parser.add_argument("-o", "--output", help="If set the predictions are printed every 5 epochs.", action="store_true")
     return parser
 
 def main():
@@ -66,20 +68,20 @@ def main():
 
     data_manager = DataManager(args.datapath) # create the data manager
 
-    if os.path.exists(args.modelpath):
-        print(f"loading model from {args.modelpath}...")
-        model = torch.load(args.modelpath).to(device)
+    if os.path.exists(args.model_path):
+        print(f"loading model from {args.model_path}...")
+        model = torch.load(args.model_path).to(device)
     else:
         if yes_no("Do you really want to create a new model?"):
             print("creating a new model...")
             model = NeuralNetwork(len(data_manager.genre_info)).to(device)
 
-    training_dataloader = DataLoader(data_manager.get_training_dataset(CLIP_LENGTH, load_to_memory=args.memory), batch_size=32, shuffle=True)
-    testing_dataloader = DataLoader(data_manager.get_testing_dataset(CLIP_LENGTH), batch_size=32)
+    training_dataloader = DataLoader(data_manager.get_training_dataset(CLIP_LENGTH, load_to_memory=args.memory), batch_size=args.batch_size, shuffle=True)
+    testing_dataloader = DataLoader(data_manager.get_testing_dataset(CLIP_LENGTH), batch_size=args.batch_size)
 
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=LEARINING_RATE, momentum=1/3, weight_decay=1e-4)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=1/8, weight_decay=3e-4)
 
 
     if args.plot:
@@ -97,7 +99,7 @@ def main():
         while True:
             print(f"Epoch {t}\n-----------------------")
             train(training_dataloader, model, loss_fn, optimizer, device)
-            accuracy, avg_loss = test(testing_dataloader, model, loss_fn, device, verbose=False)
+            accuracy, avg_loss = test(testing_dataloader, model, loss_fn, device, verbose=args.output and (t%5==0))
 
             if args.plot:
                 losses.append(avg_loss)
@@ -114,8 +116,8 @@ def main():
             if nbc.get_data() == "q":
                 break
     if yes_no("Do you want to save the model?"):
-        print(f"saving model to {args.modelpath}")
-        torch.save(model, args.modelpath)
+        print(f"saving model to {args.model_path}")
+        torch.save(model, args.model_path)
         
     if args.plot:
         plt.show()
