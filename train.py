@@ -52,13 +52,12 @@ def main():
 
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=1/8, weight_decay=3e-4)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate)
 
 
+    losses = []
+    accuracies = []
     if args.plot:
-        losses = []
-        accuracies = []
-
         fig, ax = plt.subplots()
         confidences_line, = ax.plot([], losses, label="confidence")
         accuracies_line, = ax.plot([], accuracies, label="accuracy")
@@ -72,10 +71,13 @@ def main():
             train(training_dataloader, model, loss_fn, optimizer, device)
             accuracy, avg_loss = test(testing_dataloader, model, loss_fn, device, verbose=args.output and (t%5==0))
 
-            if args.plot:
-                losses.append(avg_loss)
-                accuracies.append(accuracy)
+            losses.append(avg_loss)
+            accuracies.append(accuracy)
+            if t > 1:
+                slope, intercept = np.polyfit(np.arange(0, min(t, 20)), np.exp(-np.array(losses[-20:])), deg=1)
+                print(f"Gaining {(100*slope):.2f}% confidence/epoch.")
 
+            if args.plot:
                 confidences = np.exp(-np.array(losses))
                 confidences_line.set_data(np.arange(1, t+1), confidences)
                 accuracies_line.set_data(np.arange(1, t+1), accuracies)
