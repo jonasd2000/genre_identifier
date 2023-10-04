@@ -13,41 +13,12 @@ from kbhit.kbhit import NonBlockingConsole
 
 from data_manager import DataManager
 from neural_network.nn import NeuralNetwork, train, test
+from utility.general import yes_no
+from utility.torch import get_device
 
 
 CLIP_LENGTH = 131_072
 LEARINING_RATE = 2e-2
-
-def get_device() -> str:
-    device = (
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps"
-        if torch.backends.mps.is_available()
-        else "cpu"
-    )
-    print(f"using {device} device")
-    return device
-
-def yes_no(msg: str):
-    """
-    A function that prompts the user with a message and expects a yes or no answer.
-    
-    Args:
-        msg (str): The message to display to the user.
-        
-    Returns:
-        bool: True if the user answers "y", False if the user answers "n".
-    """
-    while True:
-        inp = input(f"{msg} (y/n) ")
-        match inp.lower():
-            case "y":
-                return True
-            case "n":
-                return False
-            case _:
-                pass
 
 
 def get_parser():

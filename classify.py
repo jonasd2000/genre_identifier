@@ -5,8 +5,8 @@ import torch
 import torchaudio
 from torch import nn
 
-from train import get_device
-from audio.helpers import waveform_to_mono, clip_samples
+from utility.audio import waveform_to_mono, clip_samples
+from utility.torch import get_device
 
 CLIP_LENGTH = 131_072
 
