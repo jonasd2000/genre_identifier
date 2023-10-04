@@ -82,6 +82,33 @@ class DataManager:
 
     def __repr__(self) -> str:
         return f"DataManager\n Current path: {self.path}\n Registered genres: {list(self.genre_info.keys())}\n"
+    
+    # a function that counts the number of tracks per genre
+    def count_tracks_per_genre(self) -> dict:
+        genre_count = {}
+        for track in self.track_info:
+            genre = track["genre"]
+            if genre in genre_count:
+                genre_count[genre] += 1
+            else:
+                genre_count[genre] = 1
+        return genre_count
+    
+    # a function that counts the number of tracks that are training
+    def count_training_testing_tracks(self) -> tuple[int, int]:
+        training_count = 0
+        testing_count = 0
+        for track in self.track_info:
+            if track["training"]:
+                training_count += 1
+            else:
+                testing_count += 1
+        return training_count, testing_count
+    
+
+    def info(self) -> str:
+        training_count, testing_count = self.count_training_testing_tracks()
+        return f"{repr(self)} {self.count_tracks_per_genre()}\n Training {training_count} / Testing {testing_count}\n"
 
     def confirm_path_creation(self):
         while True:
