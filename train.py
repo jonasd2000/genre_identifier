@@ -18,7 +18,7 @@ from utility.torch import get_device
 
 
 CLIP_LENGTH = 131_072
-LEARINING_RATE = 2e-2
+LEARINING_RATE = 3e-2
 
 
 def get_parser():
@@ -70,6 +70,7 @@ def main():
             print(f"Epoch {t}\n-----------------------")
             train(training_dataloader, model, loss_fn, optimizer, device)
             accuracy, avg_loss = test(testing_dataloader, model, loss_fn, device, verbose=args.output and (t%5==0))
+            print(f"Test Error: \n Accuracy: {(100*accuracy):>0.1f}%, Avg loss: {avg_loss:>8f} \n")
 
             losses.append(avg_loss)
             accuracies.append(accuracy)
