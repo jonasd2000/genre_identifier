@@ -29,7 +29,7 @@ def get_parser():
     parser.add_argument("-p", "--plot", help="If set, plots the results.", action="store_true")
     parser.add_argument("-l", "--learning_rate", help="Learning rate for the optimizer.", type=float, default=LEARINING_RATE)
     parser.add_argument("-b", "--batch_size", help="Batch size for the training.", type=int, default=32)
-    parser.add_argument("-o", "--output", help="If set the predictions are printed every 5 epochs.", action="store_true")
+    parser.add_argument("-o", "--output", help="If set the predictions are printed every n epochs.", type=int, default=None)
     return parser
 
 def main():
@@ -69,7 +69,7 @@ def main():
         while True:
             print(f"Epoch {t}\n-----------------------")
             train(training_dataloader, model, loss_fn, optimizer, device)
-            accuracy, avg_loss = test(testing_dataloader, model, loss_fn, device, verbose=args.output and (t%5==0))
+            accuracy, avg_loss = test(testing_dataloader, model, loss_fn, device, verbose=args.output and (t%args.output==0))
             print(f"Test Error: \n Accuracy: {(100*accuracy):>0.1f}%, Avg loss: {avg_loss:>8f} \n")
 
             losses.append(avg_loss)
