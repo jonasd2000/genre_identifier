@@ -7,17 +7,17 @@ class NeuralNetwork(nn.Module):
     def __init__(self, output_length: int, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.conv1 = nn.Sequential(
-            nn.Conv1d(1, 1, 32768),
+            nn.Conv1d(1, 1, 512, padding=256),
             nn.ReLU(),
-            nn.Conv1d(1, 1, 512),
+            nn.Conv1d(1, 1, 512, padding=256),
             nn.ReLU(),
         )
         self.lin1 = nn.Sequential(
-            nn.Linear(97794, 8192),
+            nn.Linear(21848, 8192),
             nn.ReLU(),
-            nn.Linear(8192, 512),
+            nn.Linear(8192, 1024),
             nn.ReLU(),
-            nn.Linear(512, 512),
+            nn.Linear(1024, 512),
             nn.ReLU(),
             nn.Linear(512, output_length)
         )
@@ -97,5 +97,4 @@ def test(dataloader, model, loss_fn, device, verbose: bool=False):
 
     test_loss /= size
     correct /= size
-    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
     return correct, test_loss
