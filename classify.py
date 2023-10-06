@@ -5,7 +5,7 @@ import torch
 import torchaudio
 from torch import nn
 
-from utility.audio import waveform_to_mono, clip_samples
+from utility.audio import waveform_to_mono, prepare_waveform
 from utility.torch import get_device
 
 CLIP_LENGTH = 131_072
@@ -46,8 +46,8 @@ def main():
     with torch.no_grad():
         result = torch.Tensor([[0 for _ in range(model.lin1[-1].out_features)]]).to(device)
         for i in range(args.passes):
-            clip = torch.Tensor(clip_samples(waveform, CLIP_LENGTH)).to(device)
-            res = model(clip)
+            vector = torch.Tensor(prepare_waveform(waveform, CLIP_LENGTH)).to(device)
+            res = model(vector)
             if args.verbose:
                 print(f"sample {i+1}: {res}")
 

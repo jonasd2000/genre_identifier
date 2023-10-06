@@ -1,6 +1,17 @@
 import random
 import torch
 import matplotlib.pyplot as plt
+import numpy as np
+from numpy.fft import rfft
+
+
+def prepare_waveform(waveform: torch.Tensor, samples: int):
+    waveform = waveform_to_mono(waveform)
+    clip = clip_samples(waveform, samples)
+    rfourier = (np.abs(rfft(clip, norm="ortho")).astype(np.float32))[:, ::3]
+    return rfourier
+
+
 
 def waveform_to_mono(waveform):
     return torch.mean(waveform, dim=0).reshape(1, -1)

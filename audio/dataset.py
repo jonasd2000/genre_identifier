@@ -9,7 +9,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from numpy.fft import rfft
 
-from utility.audio import clip_samples, waveform_to_mono
+from utility.audio import waveform_to_mono, prepare_waveform
 
 
 
@@ -62,11 +62,13 @@ class TrackGenreDataset(Dataset):
     def __getitem__(self, index) -> tuple[np.ndarray, str]:
         waveform = self.get_waveform(index)
 
-        clip = clip_samples(waveform, self.clip_length)
-        rfourier = (np.abs(rfft(clip, norm="ortho")).astype(np.float32))[:, ::3]
+        vector = prepare_waveform(waveform, self.clip_length)
+
+        # clip = clip_samples(waveform, self.clip_length)
+        # rfourier = (np.abs(rfft(clip, norm="ortho")).astype(np.float32))[:, ::3]
         # print(rfourier.shape)
 
-        return rfourier, self.genre_map[self.track_info[index]["genre"]]
+        return vector, self.genre_map[self.track_info[index]["genre"]]
 
 
 def main():
