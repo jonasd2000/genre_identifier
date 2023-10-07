@@ -2,13 +2,13 @@ import random
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.fft import rfft
-
+import cupy as cp
+from cupy.fft import rfft
 
 def prepare_waveform(waveform: torch.Tensor, samples: int):
     waveform = waveform_to_mono(waveform)
     clip = clip_samples(waveform, samples)
-    rfourier = (np.abs(rfft(clip, norm="ortho")).astype(np.float32))[:, ::3]
+    rfourier = torch.as_tensor((cp.abs(rfft(cp.asarray(clip), norm="ortho")).astype(np.float32)), device=clip.device)[:, ::3]
     return rfourier
 
 
