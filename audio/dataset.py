@@ -1,4 +1,3 @@
-from typing import Any
 import json
 import os
 from tqdm import trange
@@ -7,22 +6,22 @@ import torchaudio
 from torch.utils.data import Dataset, DataLoader
 
 import numpy as np
-from numpy.fft import rfft
 
-from utility.audio import waveform_to_mono, prepare_waveform
+from utility.audio import waveform_to_mono, prepare_waveform, clip_samples
 
 
 
 class TrackGenreDataset(Dataset):
     path: str
     clip_length: float
+    assigned_memory: int
 
     genre_map: dict
     track_info: list[dict]
     waveforms: list[np.ndarray]
 
 
-    def __init__(self, path, track_info: list[dict], clip_length: float, genre_map: dict, load_to_memory: bool=False) -> None:
+    def __init__(self, path, track_info: list[dict], clip_length: float, genre_map: dict, assigned_memory: int=0) -> None:
         """
         path: path to data
         clip_length: number of samples used per song for training
@@ -35,23 +34,26 @@ class TrackGenreDataset(Dataset):
         self.genre_map = genre_map
         self.track_info = track_info
 
-        self.load_to_memory = load_to_memory
-        if self.load_to_memory:
-            self.waveforms = self.load_waveforms()
+        self.assigned_memory = assigned_memory * 8 # in bit
+        if self.assigned_memory > 0:
+            self.waveforms = self.load_waveforms(self.assigned_memory)
 
 
     def __len__(self) -> int:
         return len(self.track_info)
     
-    def load_waveforms(self):
+    def load_waveforms(self, assigned_memory: int):
+        # samples per element = memory in bit / (datatype size in bit * number of elements)
+        samples_to_load = int(assigned_memory / (32 * len(self))) 
+
         waveforms = []
         for i in trange(len(self.track_info), desc="Loading waveforms"):
             waveform, samplerate = torchaudio.load(os.path.join(self.path, self.track_info[i]["filename"] + ".mp3"))
-            waveforms.append(waveform_to_mono(waveform))
+            waveforms.append(clip_samples(waveform_to_mono(waveform), samples_to_load, clone=True))
         return waveforms
 
     def get_waveform(self, index: int) -> np.ndarray:
-        if self.load_to_memory: # if loaded to memory
+        if self.assigned_memory: # if loaded to memory
             waveform = self.waveforms[index]
         else: # if not read from disk
             track_file_name = self.track_info[index]["filename"]
@@ -63,10 +65,6 @@ class TrackGenreDataset(Dataset):
         waveform = self.get_waveform(index)
 
         vector = prepare_waveform(waveform, self.clip_length)
-
-        # clip = clip_samples(waveform, self.clip_length)
-        # rfourier = (np.abs(rfft(clip, norm="ortho")).astype(np.float32))[:, ::3]
-        # print(rfourier.shape)
 
         return vector, self.genre_map[self.track_info[index]["genre"]]
 

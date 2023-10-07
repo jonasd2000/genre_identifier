@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader
 
 import numpy as np
 
+import psutil
+
 from kbhit.kbhit import NonBlockingConsole
 
 from data_manager import DataManager
@@ -25,7 +27,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("model_path", help="Path to the model. If the path does not exist yet a new model will be created.", type=str, default=None)
     parser.add_argument("-d", "--datapath", help="Path to the data used for training. Default is \"data/music/\"", type=str, default="data/music/")
-    parser.add_argument("-m", "--memory", help="If set, loads the data to memory. Otherwise reads the samples from disk.", action="store_true")
+    parser.add_argument("-m", "--memory", help="Fraction of available memory to load samples into.", type=float, default=0)
     parser.add_argument("-p", "--plot", help="If set, plots the results.", action="store_true")
     parser.add_argument("-l", "--learning_rate", help="Learning rate for the optimizer.", type=float, default=LEARINING_RATE)
     parser.add_argument("-b", "--batch_size", help="Batch size for the training.", type=int, default=32)
@@ -47,8 +49,15 @@ def main():
             print("creating a new model...")
             model = NeuralNetwork(len(data_manager.genre_info)).to(device)
 
-    training_dataloader = DataLoader(data_manager.get_training_dataset(CLIP_LENGTH, load_to_memory=args.memory), batch_size=args.batch_size, shuffle=True)
-    testing_dataloader = DataLoader(data_manager.get_testing_dataset(CLIP_LENGTH), batch_size=args.batch_size)
+    training_memory = 0
+    testing_memory = 0
+    if args.memory > 0:
+        training_count, testing_count = data_manager.count_training_testing_tracks()
+        available_memory = psutil.virtual_memory().available
+        training_memory = args.memory * available_memory * training_count / len(data_manager.track_info)
+        testing_memory = args.memory * available_memory * testing_count / len(data_manager.track_info)
+    training_dataloader = DataLoader(data_manager.get_training_dataset(CLIP_LENGTH, assigned_memory=training_memory), batch_size=args.batch_size, shuffle=True)
+    testing_dataloader = DataLoader(data_manager.get_testing_dataset(CLIP_LENGTH, assigned_memory=testing_memory), batch_size=args.batch_size)
 
 
     loss_fn = nn.CrossEntropyLoss()

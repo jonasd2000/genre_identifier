@@ -176,7 +176,7 @@ class DataManager:
 
         return len(indices_to_delete)
 
-    def get_training_dataset(self, clip_length: int=131_072, genres: list[str]=None, load_to_memory: bool=False) -> Dataset:
+    def get_training_dataset(self, clip_length: int=131_072, genres: list[str]=None, assigned_memory: int=0) -> Dataset:
         training_trackinfo = [entry for entry in self.track_info if entry["training"]]
         if genres:
             # filter testing_trackinfo based on genres
@@ -187,10 +187,10 @@ class DataManager:
             track_info=training_trackinfo,
             clip_length=clip_length,
             genre_map=self.genre_info,
-            load_to_memory=load_to_memory
+            assigned_memory=assigned_memory
         )
 
-    def get_testing_dataset(self, clip_length: int=131_072, genres: list[str]=None, load_to_memory: bool=False) -> Dataset:
+    def get_testing_dataset(self, clip_length: int=131_072, genres: list[str]=None, assigned_memory: int=0) -> Dataset:
         testing_trackinfo = [entry for entry in self.track_info if not entry["training"]]
         if genres:
             # filter testing_trackinfo based on genres
@@ -201,7 +201,7 @@ class DataManager:
             track_info=testing_trackinfo,
             clip_length=clip_length,
             genre_map=self.genre_info,
-            load_to_memory=load_to_memory
+            assigned_memory=assigned_memory
         )
 
 

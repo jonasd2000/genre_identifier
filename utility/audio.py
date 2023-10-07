@@ -16,19 +16,17 @@ def prepare_waveform(waveform: torch.Tensor, samples: int):
 def waveform_to_mono(waveform):
     return torch.mean(waveform, dim=0).reshape(1, -1)
 
-def clip_seconds(waveform, seconds, samplerate, random_start=True):
+def clip_seconds(waveform: torch.Tensor, seconds: float, samplerate: int, random_start: bool=True, clone: bool=False):
     num_samples = seconds * samplerate
-
-    start = 0 if not random_start else random.randint(0, waveform.shape[1]-num_samples-1)
-
-    clip = waveform[:, start:start+num_samples]
-    return clip
+    return clip_samples(waveform, num_samples, random_start=random_start, clone=clone)
 
 
-def clip_samples(waveform, num_samples, random_start=True):
-    start = 0 if not random_start else random.randint(0, waveform.shape[1]-num_samples-1)
+def clip_samples(waveform: torch.Tensor, num_samples: int, random_start: bool=True, clone: bool=False):
+    start = 0 if not random_start else random.randint(0, max(0, waveform.shape[1]-num_samples-1))
 
     clip = waveform[:, start:start+num_samples]
+    if clone:
+        clip = clip.clone()
     return clip
 
 
