@@ -48,6 +48,8 @@ def main():
         if yes_no("Do you really want to create a new model?"):
             print("creating a new model...")
             model = NeuralNetwork(len(data_manager.genre_info)).to(device)
+        else:
+            quit()
 
     training_memory = 0
     testing_memory = 0
@@ -56,8 +58,23 @@ def main():
         available_memory = psutil.virtual_memory().available
         training_memory = args.memory * available_memory * training_count / len(data_manager.track_info)
         testing_memory = args.memory * available_memory * testing_count / len(data_manager.track_info)
-    training_dataloader = DataLoader(data_manager.get_training_dataset(CLIP_LENGTH, assigned_memory=training_memory), batch_size=args.batch_size, shuffle=True)
-    testing_dataloader = DataLoader(data_manager.get_testing_dataset(CLIP_LENGTH, assigned_memory=testing_memory), batch_size=args.batch_size)
+
+
+    training_dataloader = DataLoader(
+        data_manager.get_training_dataset(
+            CLIP_LENGTH, 
+            assigned_memory=training_memory
+        ), 
+        batch_size=args.batch_size, 
+        shuffle=True
+    )
+    testing_dataloader = DataLoader(
+        data_manager.get_testing_dataset(
+            CLIP_LENGTH, 
+            assigned_memory=testing_memory
+        ), 
+        batch_size=args.batch_size
+    )
 
 
     loss_fn = nn.CrossEntropyLoss()

@@ -5,6 +5,7 @@ import torch
 import torchaudio
 from torch import nn
 
+from data_manager import DataManager
 from utility.audio import waveform_to_mono, prepare_waveform
 from utility.torch import get_device
 
@@ -29,10 +30,7 @@ def get_parser():
 def main():
     args = get_parser().parse_args()
 
-
-    with open("data/music/genre_info.json") as genre_map_file:
-        genre_map = json.load(genre_map_file)
-        inv_genre_map = {value: key for key, value in genre_map.items()}
+    data_manager = DataManager("data/music/")
 
     track_path = args.track_path
     model_path = args.model_path
@@ -54,7 +52,7 @@ def main():
             result += res
 
         confidences = nn.Softmax(1)(result)
-        print(f"The genre of this track is {inv_genre_map[confidences.argmax(1).item()]} (confidence: {(100*(confidences.max(1)[0].item())):.2f}%).")
+        print(f"The genre of this track is {data_manager.genre_info[confidences.argmax(1).item()]} (confidence: {(100*(confidences.max(1)[0].item())):.2f}%).")
 
 if __name__ == "__main__":
     main()

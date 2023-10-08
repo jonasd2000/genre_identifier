@@ -66,7 +66,7 @@ class TrackGenreDataset(Dataset):
 
         vector = prepare_waveform(waveform, self.clip_length)
 
-        return vector, self.genre_map[self.track_info[index]["genre"]]
+        return vector, self.genre_map.index(self.track_info[index]["genre"])
 
 
 def main():

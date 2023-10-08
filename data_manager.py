@@ -11,6 +11,7 @@ from torch.utils.data import Dataset
 
 
 from audio.dataset import TrackGenreDataset
+from utility.general import yes_no
 
 
 GENREINFO_FILENAME = "genre_info.json"
@@ -65,7 +66,7 @@ class YouTubeDownloader:
 
 class DataManager:
     path: Path
-    genre_info: dict
+    genre_info: list[str]
     track_info: list[dict]
 
     yt_downloader: YouTubeDownloader
@@ -81,7 +82,7 @@ class DataManager:
         self.read_path()
 
     def __repr__(self) -> str:
-        return f"DataManager\n Current path: {self.path}\n Registered genres: {list(self.genre_info.keys())}\n"
+        return f"DataManager\n Current path: {self.path}\n Registered genres: {self.genre_info}\n"
     
     # a function that counts the number of tracks per genre
     def count_tracks_per_genre(self) -> dict:
@@ -110,16 +111,8 @@ class DataManager:
         training_count, testing_count = self.count_training_testing_tracks()
         return f"{repr(self)} {self.count_tracks_per_genre()}\n Training {training_count} / Testing {testing_count}\n"
 
-    def confirm_path_creation(self):
-        while True:
-            inp = input(f"The path {self.path} does not yet exist. Do you want to create it? (y/n) ")
-            match inp.lower():
-                case "y": return True
-                case "n": return False
-                case _: pass
-
     def create_path(self):
-        if not self.confirm_path_creation():
+        if not yes_no(f"The path {self.path} does not yet exist. Do you want to create it? (y/n) "):
             return
 
         os.mkdir(self.path)
@@ -142,13 +135,17 @@ class DataManager:
 
     def write_genre_info(self) -> None:
         with open(self.path / GENREINFO_FILENAME, "w") as genreinfo_file:
-            self.genre_info = json.dump(self.genre_info, genreinfo_file)
+            json.dump(self.genre_info, genreinfo_file)
     def write_track_info(self) -> None:
         with open(self.path / TRACKINFO_FILENAME, "w") as trackinfo_file:
-            self.genre_info = json.dump(self.track_info, trackinfo_file)
+            json.dump(self.track_info, trackinfo_file)
 
     def register_genre(self, genre: str) -> None:
-        self.genre_info[genre] = max(list(self.genre_info.values()))+1 if self.genre_info.values() else 0
+        self.genre_info.append(genre)
+        self.write_genre_info()
+
+    def deregister_genre(self, genre: str) -> None:
+        self.genre_info.remove(genre)
         self.write_genre_info()
 
     def delete_entry(self, index: int) -> None:
@@ -158,6 +155,7 @@ class DataManager:
         del self.track_info[index]
 
         self.write_track_info()
+        print(f"Successfully deleted entry {index}.")
 
     def delete_entries(self, **properties: dict) -> int:
         indices_to_delete = []
@@ -176,11 +174,8 @@ class DataManager:
 
         return len(indices_to_delete)
 
-    def get_training_dataset(self, clip_length: int=131_072, genres: list[str]=None, assigned_memory: int=0) -> Dataset:
+    def get_training_dataset(self, clip_length: int=131_072, assigned_memory: int=0) -> Dataset:
         training_trackinfo = [entry for entry in self.track_info if entry["training"]]
-        if genres:
-            # filter testing_trackinfo based on genres
-            training_trackinfo = [entry for entry in training_trackinfo if entry["genre"] in genres]
         
         return TrackGenreDataset(
             path=self.path,
@@ -190,11 +185,8 @@ class DataManager:
             assigned_memory=assigned_memory
         )
 
-    def get_testing_dataset(self, clip_length: int=131_072, genres: list[str]=None, assigned_memory: int=0) -> Dataset:
+    def get_testing_dataset(self, clip_length: int=131_072, assigned_memory: int=0) -> Dataset:
         testing_trackinfo = [entry for entry in self.track_info if not entry["training"]]
-        if genres:
-            # filter testing_trackinfo based on genres
-            testing_trackinfo = [entry for entry in testing_trackinfo if entry["genre"] in genres]
        
         return TrackGenreDataset(
             path=self.path,
