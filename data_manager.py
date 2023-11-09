@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import argparse
 import subprocess
+import hashlib
 
 from pytube import YouTube
 from pytube import Playlist
@@ -29,7 +30,7 @@ class YouTubeDownloader:
         video = YouTube(url)
         stream = video.streams.filter(only_audio=True).first()
 
-        filename = f"{hash(video.title)}"
+        filename = f"{hashlib.sha256(bytes(video.title, 'utf-8')).hexdigest()}"
         mp4path = stream.download(self.path, filename=filename+".mp4")
         mp3path = mp4path[:-4] + ".mp3"
         subprocess.run(f"ffmpeg -i {mp4path} -ab 128k -ac 2 -ar 44100 -vn {mp3path}", shell=True)
