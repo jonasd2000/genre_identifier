@@ -4,4 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "cupy-cuda11x>=13.3.0",
+    "matplotlib>=3.10.0",
+    "numpy>=2.2.2",
+    "pytube>=15.0.0",
+    "torch>=2.6.0",
+    "torchaudio>=2.6.0",
+    "tqdm>=4.67.1",
+]
