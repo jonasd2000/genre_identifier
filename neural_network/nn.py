@@ -13,11 +13,11 @@ class NeuralNetwork(nn.Module):
             nn.ReLU(),
         )
         self.lin1 = nn.Sequential(
-            nn.Linear(21848, 8192),
+            nn.Linear(21848, 16384),
             nn.ReLU(),
-            nn.Linear(8192, 1024),
+            nn.Linear(16384, 2048),
             nn.ReLU(),
-            nn.Linear(1024, 512),
+            nn.Linear(2048, 512),
             nn.ReLU(),
             nn.Linear(512, output_length)
         )

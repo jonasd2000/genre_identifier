@@ -20,7 +20,7 @@ from utility.torch import get_device
 
 
 CLIP_LENGTH = 131_072
-LEARINING_RATE = 3e-2
+LEARINING_RATE = 5e-4
 
 
 def get_parser():
@@ -101,7 +101,8 @@ def main():
             losses.append(avg_loss)
             accuracies.append(accuracy)
             if t > 1:
-                slope, intercept = np.polyfit(np.arange(0, min(t, 20)), np.exp(-np.array(losses[-20:])), deg=1)
+                linear_regression_length = max(20, t//5)
+                slope, intercept = np.polyfit(np.arange(0, min(t, linear_regression_length)), np.exp(-np.array(losses[-linear_regression_length:])), deg=1)
                 print(f"Gaining {(100*slope):.2f}% confidence/epoch.")
 
             if args.plot:
@@ -118,6 +119,7 @@ def main():
     if yes_no("Do you want to save the model?"):
         print(f"saving model to {args.model_path}")
         torch.save(model, args.model_path)
+        print(f"saved model to {args.model_path}")
         
     if args.plot:
         plt.show()
