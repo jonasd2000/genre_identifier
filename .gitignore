@@ -1,5 +1,4 @@
-/data/music
+/data
 *.txt
-.vscode
 __pycache__
 *_model

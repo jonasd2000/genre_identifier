@@ -8,8 +8,10 @@ dependencies = [
     "cupy-cuda11x>=13.3.0",
     "matplotlib>=3.10.0",
     "numpy>=2.2.2",
-    "pytube>=15.0.0",
+    "polars>=1.21.0",
+    "pyside6>=6.8.2",
     "torch>=2.6.0",
     "torchaudio>=2.6.0",
     "tqdm>=4.67.1",
+    "yt-dlp>=2025.1.26",
 ]
