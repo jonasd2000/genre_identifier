@@ -2,7 +2,7 @@ from typing import Dict, Any
 
 from PySide6.QtCore import QObject, QRunnable, Signal, QThreadPool
 from PySide6.QtWidgets import (
-    QWidget, QComboBox, QCheckBox, QLineEdit, QLabel, QPushButton,
+    QWidget, QComboBox, QCheckBox, QLineEdit, QLabel, QPushButton, QSpinBox,
     QListWidget, QListWidgetItem,
     QVBoxLayout, QFormLayout,
 )
@@ -20,13 +20,14 @@ class YTDLPThread(QRunnable, QObject):
     individual_download_started: Signal = Signal(int, str, int) # url, genre, is_training_data, playlist_index
     individual_download_finished: Signal = Signal(str, str) # url, file_path
 
-    def __init__(self, batch_id: int, batch_url: str, path: str):
+    def __init__(self, batch_id: int, batch_url: str, path: str, n_items: int=None):
         QObject.__init__(self)
         QRunnable.__init__(self)
 
         self.batch_id = batch_id
         self.url = batch_url
         self.path = path
+        self.playlist_items = n_items
         
         self.video_url = None
         self.last_video_url = None
@@ -43,6 +44,8 @@ class YTDLPThread(QRunnable, QObject):
             }],
             "progress_hooks": [self.on_download_progress],
         }
+        if self.playlist_items is not None:
+            ydl_opts.update({"playlist_items": f"0:{self.playlist_items}"})
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.add_post_hook(self.on_individual_download_finish)
@@ -60,7 +63,8 @@ class YTDLPThread(QRunnable, QObject):
                 if self.video_url != self.last_video_url:
                     # if this is the first download, emit the first_item_download_started signal
                     if self.last_video_url is None:
-                        n_entries = info_dict["info_dict"]["n_entries"] if "n_entries" in info_dict["info_dict"] else 1
+                        print(self.playlist_items, info_dict["info_dict"]["n_entries"])
+                        n_entries = min(info_dict["info_dict"]["n_entries"], self.playlist_items) if "n_entries" in info_dict["info_dict"] else 1
                         self.batch_download_started.emit(self.batch_id, n_entries)
                     
                     index = info_dict["info_dict"]["playlist_index"] or 1
@@ -88,6 +92,8 @@ class DownloadWidget(QWidget):
 
         self.is_training_data_checkbox = QCheckBox()
 
+        self.n_tracks_spinbox = QSpinBox(maximum=1000)
+
         self.url_line_edit = QLineEdit(clearButtonEnabled=True)
         self.url_line_edit.textChanged.connect(self.enable_download_button)
 
@@ -96,6 +102,8 @@ class DownloadWidget(QWidget):
         track_details_section_layout.addWidget(self.genre_combobox)
         track_details_section_layout.addWidget(QLabel("Is Training Data:"))
         track_details_section_layout.addWidget(self.is_training_data_checkbox)
+        track_details_section_layout.addWidget(QLabel("Number of Tracks:"))
+        track_details_section_layout.addWidget(self.n_tracks_spinbox)
         track_details_section_layout.addWidget(QLabel("URL:"))
         track_details_section_layout.addWidget(self.url_line_edit)
 
@@ -118,12 +126,15 @@ class DownloadWidget(QWidget):
         
         self.setLayout(download_section_layout)
     
-    def data_selected(self, data_path, data):
+    def on_data_changed(self, data_path, data):
         self.data_path = data_path
-        combobox_text = self.genre_combobox.currentText()
-        self.genre_combobox.clear()
-        self.genre_combobox.addItems([""] + list(data["genre"].unique()))
-        self.genre_combobox.setCurrentText(combobox_text)
+
+        if data is not None:
+            combobox_text = self.genre_combobox.currentText()
+            self.genre_combobox.clear()
+            self.genre_combobox.addItems([""] + list(data["genre"].unique()))
+            self.genre_combobox.setCurrentText(combobox_text)
+            
         self.enable_download_button()
 
     def enable_download_button(self):
@@ -166,9 +177,10 @@ class DownloadWidget(QWidget):
         self.download_status_list.addItem(widget_item)
 
         ytdlp_thread = YTDLPThread(
-            batch_id         = batch_id,
-            batch_url        = download_url,
-            path             = str(self.data_path),
+            batch_id    = batch_id,
+            batch_url   = download_url,
+            path        = str(self.data_path),
+            n_items     = self.n_tracks_spinbox.value()
         )
         ytdlp_thread.batch_download_started.connect(self.on_batch_download_started)
         ytdlp_thread.individual_download_started.connect(self.on_individual_download_started)

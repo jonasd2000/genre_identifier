@@ -1,4 +1,4 @@
 /data
-*.txt
 __pycache__
-*_model
+*.txt
+*.pt

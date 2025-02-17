@@ -3,12 +3,12 @@ name = "genre-identifier"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
-    "cupy-cuda11x>=13.3.0",
     "matplotlib>=3.10.0",
     "numpy>=2.2.2",
     "polars>=1.21.0",
+    "pyqtgraph>=0.13.7",
     "pyside6>=6.8.2",
     "torch>=2.6.0",
     "torchaudio>=2.6.0",

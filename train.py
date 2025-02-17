@@ -14,7 +14,7 @@ import psutil
 from kbhit.kbhit import NonBlockingConsole
 
 from data_manager import DataManager
-from neural_network.nn import NeuralNetwork, train, test
+from neural_network.nn import GenreClassifier, train, test
 from utility.general import yes_no
 from utility.torch import get_device
 
@@ -47,7 +47,7 @@ def main():
     else:
         if yes_no("Do you really want to create a new model?"):
             print("creating a new model...")
-            model = NeuralNetwork(len(data_manager.genre_info)).to(device)
+            model = GenreClassifier(len(data_manager.genre_info)).to(device)
         else:
             quit()
 
